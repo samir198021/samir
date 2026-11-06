@@ -1,0 +1,29 @@
+name: Daily stock movers alert
+
+on:
+  schedule:
+    # 10:15 UTC = 15:45 IST, Mon-Fri (NSE closes 15:30 IST)
+    - cron: "15 10 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Send even if market was closed (1 = yes)"
+        required: false
+        default: ""
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python stock_alert.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MIN_GAIN_PCT: ${{ vars.MIN_GAIN_PCT }}
+          FORCE: ${{ github.event.inputs.force }}
